@@ -6,7 +6,6 @@ const closeDivTextBox = document.querySelector('.close')
 const selectElement = document.querySelector('select')
 const textArea = document.querySelector('textarea')
 
-
 const humanExpressions = [
     { img: './img/drink.jpg', text: 'Estou com sede' },
     { img: './img/food.jpg', text: 'Estou com fome' },
@@ -39,81 +38,71 @@ const setVoice = event => {
 
 const addExpressionBoxesIntoDOM = () => {
     main.innerHTML = humanExpressions.map(({ img, text }) => `
-         <div class="expression-box">
+         <div class="expression-box" data-js="${text}">
             <img src="${img}" alt="${text}" data-js="${text}">
-            <p class="info">${text}</p>
+            <p class="info" data-js="${text}">${text}</p>
         </div> 
     `).join('')
-    
 }
 
 addExpressionBoxesIntoDOM()
 
-main.addEventListener('click', event => {
-    const clickedElement = event.target
-
-    if (clickedElement.tagName === 'IMG' || clickedElement.tagName === 'P') {
-        setTextMessage(clickedElement.dataset.js)
-        speakText()
-
-        div.classList.add('active')
-        setTimeout(() => {
-            div.classList.remove('active')
-        }, 1000)
-    }
-    
-})
-/*const createExpressionBox = ({ img, text }) => {
-    const div = document.createElement('div')
-
-    div.classList.add('expression-box')
-    div.innerHTML = `
-        <img src="${img}" alt="${text}">
-        <p class="info">${text}</p>
-    `
-
-    div.addEventListener('click', () => {
-        setTextMessage(text)
-        speakText()
-
-        div.classList.add('active')
-        setTimeout(() => {
-            div.classList.remove('active')
-        }, 1000)
-    })
-
-    main.appendChild(div)
+const setStyleOfClickedDiv = dataValue => {
+    const div = document.querySelector(`[data-js="${dataValue}"]`)
+    div.classList.add('active')
+    setTimeout(() => {
+        div.classList.remove('active')
+    }, 1000)
 }
 
-humanExpressions.forEach(createExpressionBox) */
+main.addEventListener('click', event => {
+    const clickedElement = event.target
+    const clickedElementText = clickedElement.dataset.js
+    const clickedElementMustBeSpoken = ['img', 'p'].some(elementName =>
+        clickedElement.tagName.toLowerCase() === elementName.toLowerCase())
 
-let voices = []
+    if (clickedElementMustBeSpoken) {
+        setTextMessage(clickedElementText)
+        speakText()
+        setStyleOfClickedDiv(clickedElementText)
+    }
 
-speechSynthesis.addEventListener('voiceschanged', () => {
-    voices = speechSynthesis.getVoices()
+})
+
+const insertOptionElementsIntoDOM = voices => {
+    selectElement.innerHTML = voices.reduce((accumulator, { name, lang }) => {
+        accumulator += `<option value="${name}">${lang} | ${name}</option>`
+        return accumulator
+    }, '')
+}
+
+const setUtteranceVoice = voice => {
+    utterance.voice = voice
+    const voiceOptionElement = selectElement
+        .querySelector(`[value="${voice.name}"]`)
+    voiceOptionElement.selected = true
+}
+
+const setPTBRVoices = voices => {
     const googleVoice = voices.find(voice =>
         voice.name === 'Google português do Brasil')
     const microsoftVoice = voices.find(voice =>
         voice.name === 'Microsoft Maria Desktop - Portuguese(Brazil)')
 
-    voices.forEach(({ name, lang }) => {
-        const option = document.createElement('option')
+    if (googleVoice) {
+        setUtteranceVoice(googleVoice)
+    } else if (microsoftVoice) {
+        setUtteranceVoice(microsoftVoice)
+    }
+}
 
-        option.value = name
+let voices = []
 
-        if (googleVoice && option.value === googleVoice.name) {
-            utterance.voice = googleVoice
-            option.selected = true
-        } else if (microsoftVoice) {
-            utterance.voice = microsoftVoice
-            option.selected = true
-        }
+speechSynthesis.addEventListener('voiceschanged', () => {
+    voices = speechSynthesis.getVoices()
 
-
-        option.textContent = `${lang} | ${name}`
-        selectElement.appendChild(option)
-
-    })
+    insertOptionElementsIntoDOM(voices)
+    setPTBRVoices(voices)
 })
 
 butttonInsertText.addEventListener('click', () => {
