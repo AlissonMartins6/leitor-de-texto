@@ -38,7 +38,7 @@ const setVoice = event => {
 
 const addExpressionBoxesIntoDOM = () => {
     main.innerHTML = humanExpressions.map(({ img, text }) => `
-         <div class="expression-box" data-js="${text}">
+        <div class="expression-box" data-js="${text}">
             <img src="${img}" alt="${text}" data-js="${text}">
             <p class="info" data-js="${text}">${text}</p>
         </div> 
